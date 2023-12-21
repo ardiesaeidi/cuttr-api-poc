@@ -1,0 +1,14 @@
+{
+  "name": "cuttr-jwt-poc",
+  "version": "1.0.0",
+  "description": "JWT token validation at the edge",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ardalan Saeidi",
+  "devDependencies": {
+    "@edgio/cli": "^7.7.1",
+    "@edgio/core": "^7.7.1",
+    "@edgio/prefetch": "^7.7.1"
+  }
+}
