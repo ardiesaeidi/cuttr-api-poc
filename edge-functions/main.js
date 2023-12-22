@@ -24,7 +24,7 @@ const IDS_DEV_PUB_KEY = {
 const API_SCOPES = ['id.clients', 'id.clients:read']
 
 /**
- * 
+ * Handler for /uuid-gen endpoints
  */
 export async function handleHttpRequest(request, context) {
 
@@ -52,18 +52,30 @@ export async function handleHttpRequest(request, context) {
   if (tokenParts.length != tokenPartsTotal)
     return errorResponse('JWT token was not in a valid format');
 
+  //
+  // disabled due to perfomrance issue (exceeds 50ms cpu time) avg 1.2 seconds
+  //
+
   // 3. validate jwt token
-  let pubKey = rs.KEYUTIL.getKey(IDS_DEV_PUB_KEY);
+  // const metIdPubKey = 1;
+  // context.metrics.add(metIdPubKey, metIdPubKey);
+  // context.metrics.startTimer(metIdPubKey);
+  // let pubKey = rs.KEYUTIL.getKey(IDS_DEV_PUB_KEY);
+  // context.metrics.stopTimer(metIdPubKey);
 
-  let isValidToken = rs.jws.JWS.verifyJWT(authParts[1], pubKey, {
-    alg: ['RS256'],
-    iss: ['https://id-dev.vdms.io'],
-    // aud: ['id.api', "https://id-dev.vdms.io/resources", "Test cps engine testing 12345678"] // use to ensure token contains matching aud
-    aud: 'id.api'
-  });
+  // const metIdJwtVerify = 2;
+  // context.metrics.add(metIdJwtVerify, metIdJwtVerify);
+  // context.metrics.startTimer(metIdJwtVerify);
+  // let isValidToken = rs.jws.JWS.verifyJWT(authParts[1], pubKey, {
+  //   alg: ['RS256'],
+  //   iss: ['https://id-dev.vdms.io'],
+  //   // aud: ['id.api', "https://id-dev.vdms.io/resources", "Test cps engine testing 12345678"] // use to ensure token contains matching aud
+  //   aud: 'id.api'
+  // });
+  // context.metrics.stopTimer(metIdJwtVerify);
 
-  if (!isValidToken)
-    return errorResponse('JWT token was not valid');
+  // if (!isValidToken)
+  //   return errorResponse('JWT token was not valid');
 
   // 4. validate scopes
   let tokenPayload = JSON.parse(rs.b64utos(tokenParts[1]));
@@ -79,6 +91,10 @@ export async function handleHttpRequest(request, context) {
 
   console.info('JWT token was valid');
 
+  const metIdGetUpstream = 3;
+  context.metrics.add(metIdGetUpstream, metIdGetUpstream);
+  context.metrics.startTimer(metIdGetUpstream);
+
   // forward request to origin
   const response = await fetch(request.url, {
     edgio: {
@@ -87,6 +103,7 @@ export async function handleHttpRequest(request, context) {
     method: request.method,
     headers: request.headers,
   });
+  context.metrics.stopTimer(metIdGetUpstream);
 
   return response;
 }
