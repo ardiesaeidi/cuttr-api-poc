@@ -14,12 +14,12 @@ export default new Router()
   // })
 
   // Here is an example of how to specify an edge function to run for a particular path
-  // .get('/', {
-  //   edge_function: './edge-functions/main.js',
-  //   caching: {
-  //     max_age: '1d', // optionally cache the output of the edge function for 1 day
-  //   }
-  // })
+  .get('/uuid-gen/:path*', {
+    edge_function: './edge-functions/main.js',
+    // caching: {
+    //   max_age: '1d', // optionally cache the output of the edge function for 1 day
+    // }
+  })
 
   // plugin enabling basic Edgio functionality
   .use(edgioRoutes)

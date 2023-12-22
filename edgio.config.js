@@ -22,19 +22,19 @@ module.exports = {
       name: "origin",
 
       // Use the following to override the host header sent from the browser when connecting to the origin
-      override_host_header: "api.cuttr.io",
+      override_host_header: "us-west-2-dev.edgioapis.com",
 
       // The list of origin hosts to which to connect
       hosts: [
         {
           // The domain name or IP address of the origin server
-          location: "api.cuttr.io",
+          location: "d-y2fqw5fduf.execute-api.us-west-2.amazonaws.com",
         },
       ],
 
       tls_verify: {
         use_sni: true,
-        sni_hint_and_strict_san_check: "api.cuttr.io",
+        sni_hint_and_strict_san_check: "us-west-2-dev.edgioapis.com",
       },
 
       // Uncomment the following to configure a shield

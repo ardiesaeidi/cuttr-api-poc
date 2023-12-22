@@ -10,5 +10,10 @@
     "@edgio/cli": "^7.7.1",
     "@edgio/core": "^7.7.1",
     "@edgio/prefetch": "^7.7.1"
+  },
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "install": "^0.13.0",
+    "jsrsasign": "^10.9.0"
   }
 }
