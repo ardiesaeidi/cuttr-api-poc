@@ -12,6 +12,7 @@
     "@edgio/prefetch": "^7.7.1"
   },
   "dependencies": {
+    "dotenv": "^16.3.1",
     "fs": "^0.0.1-security",
     "install": "^0.13.0",
     "jsrsasign": "^10.9.0"

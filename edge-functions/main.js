@@ -21,79 +21,29 @@ const IDS_DEV_PUB_KEY = {
 /**
  * API scopes this endpoint accepts
  */
-const API_SCOPES = ['id.clients', 'id.clients:read']
+const API_SCOPES = ['id.clients']
 
 /**
  * Handler for /uuid-gen endpoints
  */
 export async function handleHttpRequest(request, context) {
-
   console.log('Request URL: ' + request.url);
 
-  // 1. check for presence of authorization header
-  let authorizedHeader = request.headers.get('Authorization');
+  const env = context.environmentVars;
 
-  if (!authorizedHeader)
-    return errorResponse('Authorization header missing');
+  // extract token from authorization header
+  var jwtToken = extractBearerToken(request.headers);
+  if (jwtToken == null)
+    return errorResponse('Token is missing or is not valid');
 
-  // 2. check if its the right authentication scheme
-  let authParts = authorizedHeader.trim().split(' ');
-  const authScheme = 'bearer';
-  const authSchemePartsTotal = 2;
+  let isValid = await isValidJwtTokenAuthServer(env.IDP_URL, env.INTROSPECT_SECRET,
+    jwtToken, API_SCOPES);
 
-  if (authParts.length != authSchemePartsTotal || authParts[0].toLowerCase() != authScheme)
-    return errorResponse('Invalid authentication scheme');
+  if (!isValid)
+    return errorResponse('Token is missing or is not valid');
 
-  // 2. check token is valid jwt
-  // most libraries do this already, however we can short-circuit the validation step if we know the token is malformed
-  let tokenParts = authParts[1].split('.');
-  const tokenPartsTotal = 3; // header.payload.signature
-
-  if (tokenParts.length != tokenPartsTotal)
-    return errorResponse('JWT token was not in a valid format');
-
-  //
-  // disabled due to perfomrance issue (exceeds 50ms cpu time) avg 1.2 seconds
-  //
-
-  // 3. validate jwt token
-  // const metIdPubKey = 1;
-  // context.metrics.add(metIdPubKey, metIdPubKey);
-  // context.metrics.startTimer(metIdPubKey);
-  // let pubKey = rs.KEYUTIL.getKey(IDS_DEV_PUB_KEY);
-  // context.metrics.stopTimer(metIdPubKey);
-
-  // const metIdJwtVerify = 2;
-  // context.metrics.add(metIdJwtVerify, metIdJwtVerify);
-  // context.metrics.startTimer(metIdJwtVerify);
-  // let isValidToken = rs.jws.JWS.verifyJWT(authParts[1], pubKey, {
-  //   alg: ['RS256'],
-  //   iss: ['https://id-dev.vdms.io'],
-  //   // aud: ['id.api', "https://id-dev.vdms.io/resources", "Test cps engine testing 12345678"] // use to ensure token contains matching aud
-  //   aud: 'id.api'
-  // });
-  // context.metrics.stopTimer(metIdJwtVerify);
-
-  // if (!isValidToken)
-  //   return errorResponse('JWT token was not valid');
-
-  // 4. validate scopes
-  let tokenPayload = JSON.parse(rs.b64utos(tokenParts[1]));
-  console.log(tokenPayload.scope);
-
-  let scope = tokenPayload.scope.find((s) => API_SCOPES.find((a) => s == a));
-
-  if (!scope)
-    return errorResponse('API scope not found');
-
-
-  // TOKEN was successfully validated, can continue to origin
-
+  // token was successfully validated, can continue to origin
   console.info('JWT token was valid');
-
-  const metIdGetUpstream = 3;
-  context.metrics.add(metIdGetUpstream, metIdGetUpstream);
-  context.metrics.startTimer(metIdGetUpstream);
 
   // forward request to origin
   const response = await fetch(request.url, {
@@ -103,9 +53,117 @@ export async function handleHttpRequest(request, context) {
     method: request.method,
     headers: request.headers,
   });
-  context.metrics.stopTimer(metIdGetUpstream);
 
   return response;
+}
+
+/**
+ * Extracts the bearer token value from the authorization header.
+ */
+function extractBearerToken(requestHeaders) {
+  // 1. check for presence of authorization header
+  let authorizedHeader = requestHeaders.get('Authorization');
+
+  if (!authorizedHeader) {
+    console.log('Authorization header missing');
+    return null;
+  }
+
+  // 2. check if its the right authentication scheme
+  let authParts = authorizedHeader.trim().split(' ');
+  const authScheme = 'bearer';
+  const authSchemePartsTotal = 2;
+
+  if (authParts.length != authSchemePartsTotal || authParts[0].toLowerCase() != authScheme) {
+    console.log('Invalid authentication scheme');
+    return null;
+  }
+
+  return authParts[1];
+}
+
+/**
+ * Validates a JWT token using pure javascript.
+ * - Currently not usable in EF due to native crypto libraries not
+ * available in runtime.
+ */
+function isValidJwtTokenNonNative(idpUrl, token, scopes) {
+
+  // 1. get public certificate information used to sign the token
+  let pubKey = rs.KEYUTIL.getKey(IDS_DEV_PUB_KEY);
+
+  // 2. verify token
+  let isValidToken = rs.jws.JWS.verifyJWT(token, pubKey, {
+    alg: ['RS256'],
+    iss: [idpUrl],
+    aud: 'id.api'
+  });
+
+  if (!isValidToken) {
+    console.log('JWT token was not valid')
+    return false;
+  }
+
+  // 3. validate scopes
+  let tokenParts = token.split('.');
+  const tokenPartsTotal = 3; // header.payload.signature
+
+  if (tokenParts.length != tokenPartsTotal) {
+    console.log('JWT token was not in a valid format');
+    return false;
+  }
+
+  // decode the json payload from token 
+  let tokenPayload = JSON.parse(rs.b64utos(tokenParts[1]));
+  console.log('Scopes in token: ' + tokenPayload.scope);
+
+  // check if scopes exist
+  let scope = tokenPayload.scope.find((s) => scopes.find((a) => s == a));
+
+  if (!scope) {
+    console.log('Scope not found in token')
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Offloads token check using an outbound API call to IdP introspect endpoint.
+ */
+async function isValidJwtTokenAuthServer(idpUrl, introspectSecret, token, scopes) {
+
+  console.log('IdP URL from env: ' + idpUrl)
+
+  let response = await fetch(idpUrl + '/connect/introspect', {
+    edgio: {
+      origin: 'ids-origin',
+    },
+    body: 'token=' + token,
+    method: 'POST',
+    headers: {
+      'Authorization': 'Basic ' + introspectSecret,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  });
+
+  let responseData = await response.json();
+
+  if (!responseData.active) {
+    console.log('Token not valid');
+    return false;
+  }
+
+  // check if scopes exist
+  let tokenScopes = responseData.scope.split(' ');
+  let scope = tokenScopes.find((s) => scopes.find((a) => s == a));
+
+  if (!scope) {
+    console.log('Scope not found in token')
+    return false;
+  }
+
+  return true;
 }
 
 /**

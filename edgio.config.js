@@ -1,3 +1,6 @@
+// edgio.config.js
+require('dotenv').config()
+
 // This file was automatically added by edgio init.
 // You should commit this file to source control.
 // Learn more about this file at https://docs.edg.io/guides/edgio_config
@@ -35,6 +38,29 @@ module.exports = {
       tls_verify: {
         use_sni: true,
         sni_hint_and_strict_san_check: "us-west-2-dev.edgioapis.com",
+      },
+
+      // Uncomment the following to configure a shield
+      // shields: { us_east: 'DCD' },
+    },
+    {
+      // The name of the backend origin
+      name: "ids-origin",
+
+      // Use the following to override the host header sent from the browser when connecting to the origin
+      override_host_header: "id-dev.vdms.io",
+
+      // The list of origin hosts to which to connect
+      hosts: [
+        {
+          // The domain name or IP address of the origin server
+          location: "us-west-2-dev-sas-web.sas.ceaws.edgecastcdn.net",
+        },
+      ],
+
+      tls_verify: {
+        use_sni: true,
+        sni_hint_and_strict_san_check: "id-dev.vdms.io",
       },
 
       // Uncomment the following to configure a shield
