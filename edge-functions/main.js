@@ -45,13 +45,27 @@ export async function handleHttpRequest(request, context) {
   // token was successfully validated, can continue to origin
   console.info('JWT token was valid');
 
-  // forward request to origin
-  const response = await fetch(request.url, {
+  // forward request to origin API
+  const originResponse = await fetch(request.url, {
     edgio: {
       origin: 'origin',
     },
     method: request.method,
     headers: request.headers,
+  });
+
+  // return custom response
+  let originResponseData = await originResponse.text();
+  let hyperionData = {
+    '@id': '/uuid-gen/version1',
+    '@Type': 'UuidV1',
+    'uuid': originResponseData
+  };
+
+  const content = JSON.stringify(hyperionData);
+  const response = new Response(content, {
+    headers: { "content-type": "application/json" },
+    status: 200
   });
 
   return response;
