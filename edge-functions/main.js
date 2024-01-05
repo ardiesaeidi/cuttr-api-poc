@@ -48,23 +48,22 @@ export async function handleHttpRequest(request, context) {
   // forward request to origin API
   const originResponse = await fetch(request.url, {
     edgio: {
-      origin: 'origin',
+      origin: 'api-origin',
     },
-    method: request.method,
-    headers: request.headers,
+    method: 'GET'
   });
 
   // return custom response
   let originResponseData = await originResponse.text();
   let hyperionData = {
-    '@id': '/uuid-gen/version1',
-    '@Type': 'UuidV1',
+    '@id': '/v1/uuid-gen',
+    '@Type': 'Uuid',
     'uuid': originResponseData
   };
 
   const content = JSON.stringify(hyperionData);
   const response = new Response(content, {
-    headers: { "content-type": "application/json" },
+    headers: { 'content-type': 'application/json' },
     status: 200
   });
 
@@ -199,7 +198,7 @@ function errorResponse(errorDescription) {
   const content = JSON.stringify(data);
 
   const errorResponse = new Response(content, {
-    headers: { "content-type": "application/json" },
+    headers: { 'content-type': 'application/json' },
     status: statusCode
   });
 

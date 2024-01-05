@@ -22,26 +22,23 @@ module.exports = {
   origins: [
     {
       // The name of the backend origin
-      name: "origin",
+      name: "api-origin",
 
       // Use the following to override the host header sent from the browser when connecting to the origin
-      override_host_header: "us-west-2-dev.edgioapis.com",
+      override_host_header: "www.uuidgenerator.net",
 
       // The list of origin hosts to which to connect
       hosts: [
         {
           // The domain name or IP address of the origin server
-          location: "d-y2fqw5fduf.execute-api.us-west-2.amazonaws.com",
+          location: "www.uuidgenerator.net",
+          scheme: "https"
         },
       ],
 
       tls_verify: {
-        use_sni: true,
-        sni_hint_and_strict_san_check: "us-west-2-dev.edgioapis.com",
-      },
-
-      // Uncomment the following to configure a shield
-      // shields: { us_east: 'DCD' },
+        use_sni: false
+      }
     },
     {
       // The name of the backend origin
@@ -54,17 +51,15 @@ module.exports = {
       hosts: [
         {
           // The domain name or IP address of the origin server
-          location: "us-west-2-dev-sas-web.sas.ceaws.edgecastcdn.net",
+          location: "id-dev.vdms.io",
+          scheme: "https"
         },
-      ],
+      ]
 
-      tls_verify: {
-        use_sni: true,
-        sni_hint_and_strict_san_check: "id-dev.vdms.io",
-      },
-
-      // Uncomment the following to configure a shield
-      // shields: { us_east: 'DCD' },
+      // tls_verify: {
+      //   use_sni: true,
+      //   sni_hint_and_strict_san_check: "id-dev.vdms.io",
+      // }
     },
   ],
 
