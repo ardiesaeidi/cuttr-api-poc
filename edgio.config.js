@@ -37,7 +37,8 @@ module.exports = {
       ],
 
       tls_verify: {
-        use_sni: false
+        use_sni: true,
+        sni_hint_and_strict_san_check: "www.uuidgenerator.net"
       }
     },
     {

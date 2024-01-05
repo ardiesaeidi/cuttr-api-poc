@@ -50,7 +50,8 @@ export async function handleHttpRequest(request, context) {
     edgio: {
       origin: 'api-origin',
     },
-    method: 'GET'
+    method: 'GET',
+    headers: request.headers
   });
 
   // return custom response
