@@ -21,7 +21,7 @@ const IDS_DEV_PUB_KEY = {
 /**
  * API scopes this endpoint accepts
  */
-const API_SCOPES = ['id.clients']
+const API_SCOPES = ['test.uuid_gen']
 
 /**
  * Handler for /uuid-gen endpoints
@@ -45,13 +45,19 @@ export async function handleHttpRequest(request, context) {
   // token was successfully validated, can continue to origin
   console.info('JWT token was valid');
 
+  // set origin headers so we avoid sending any unecessary headers like our authorization header
+  const originHeaders = {
+    'Accept': 'text/plain',
+    'User-Agent': 'jwt-poc/1.0.0'
+  };
+
   // forward request to origin API
   const originResponse = await fetch(request.url, {
     edgio: {
       origin: 'api-origin',
     },
     method: 'GET',
-    headers: request.headers
+    headers: originHeaders
   });
 
   // return custom response
@@ -147,7 +153,7 @@ function isValidJwtTokenNonNative(idpUrl, token, scopes) {
  */
 async function isValidJwtTokenAuthServer(idpUrl, introspectSecret, token, scopes) {
 
-  console.log('IdP URL from env: ' + idpUrl)
+  console.log('IdP URL from env: ' + idpUrl);
 
   let response = await fetch(idpUrl + '/connect/introspect', {
     edgio: {
@@ -173,7 +179,7 @@ async function isValidJwtTokenAuthServer(idpUrl, introspectSecret, token, scopes
   let scope = tokenScopes.find((s) => scopes.find((a) => s == a));
 
   if (!scope) {
-    console.log('Scope not found in token')
+    console.log('Scope not found in token');
     return false;
   }
 
