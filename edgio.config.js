@@ -19,6 +19,10 @@ module.exports = {
   purgeCacheOnDeploy: true,
   // purgeCacheOnDeploy: false,
 
+  hostnames: [
+    { hostname: 'api.cuttr.io' }
+  ],
+
   origins: [
     {
       // The name of the backend origin
